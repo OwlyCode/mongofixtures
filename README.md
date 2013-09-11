@@ -39,7 +39,7 @@ Notes on YAML
 
 /!\ The short notation for arrays [] is not supported at the moment. /!\
 
-You can generate ids by using __something__. Every time mongofixtures sees a string matching __(something)__ it generates an ObjectId and stores it. If you use __something__ elsewhere mongofixtures will set the same ObjectId. Take a look a test.yml to view an example.
+You can generate ids by using \_\_something\_\_. Every time mongofixtures sees a string matching \_\_(something)\_\_ it generates an ObjectId and stores it. If you use \_\_something\_\_ elsewhere mongofixtures will set the same ObjectId. Take a look a test.yml to view an example.
 
 What's on the todo ?
 --------------------

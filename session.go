@@ -2,19 +2,24 @@
 package mongofixtures
 
 import (
+	"github.com/kylelemons/go-gypsy/yaml"
 	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
+	"regexp"
 )
 
 // A session holds the mongo session (based on labix.org/v2/mgo).
 type Session struct {
 	MongoSession *mgo.Session
 	DatabaseName string
+	ObjectIds    map[string]bson.ObjectId
 }
 
 // Builds a new Session with the given host and database name.
 func Begin(host string, databaseName string) (Session, error) {
 	mongoSession, err := mgo.Dial(host)
 	session := Session{MongoSession: mongoSession, DatabaseName: databaseName}
+	session.ObjectIds = make(map[string]bson.ObjectId, 0)
 	return session, err
 }
 
@@ -40,6 +45,85 @@ func (l *Session) Push(collectionName string, documents ...interface{}) error {
 		err = l.MongoSession.DB(l.DatabaseName).C(collectionName).Insert(document)
 	}
 	return err
+}
+
+func (l *Session) ImportYamlFile(path string) {
+	file, err := yaml.ReadFile(path)
+
+	if err != nil {
+		panic(err)
+	}
+
+	nodes := file.Root.(yaml.Map)
+
+	for collectionName, collectionMap := range nodes {
+		cMap := collectionMap.(yaml.Map)
+		for _, data := range cMap {
+			l.Push(collectionName, l.importNode(data))
+		}
+	}
+
+}
+
+func (l *Session) importNode(value interface{}) interface{} {
+
+	var result interface{}
+
+	switch value.(type) {
+	case yaml.Map:
+		result = l.importMap(value.(yaml.Map))
+	case yaml.List:
+		result = l.importList(value.(yaml.List))
+	case yaml.Scalar:
+		result = l.importScalar(value.(yaml.Scalar))
+	}
+
+	return result
+}
+
+func (l *Session) importMap(value yaml.Map) interface{} {
+	m := make(map[string]interface{}, 0)
+	for key, subvalue := range value {
+		m[key] = l.importNode(subvalue)
+	}
+
+	return m
+}
+
+func (l *Session) importList(value yaml.List) interface{} {
+	list := make([]interface{}, 0)
+	for _, subvalue := range value {
+		list = append(list, l.importNode(subvalue))
+	}
+	return list
+}
+
+func (l *Session) importScalar(value yaml.Scalar) interface{} {
+	isHolder, _ := regexp.Match("^__(.*)__$", []byte(value))
+
+	var result interface{}
+
+	if isHolder {
+		result = l.getObjectId(string(value))
+	} else {
+		result = value
+	}
+
+	return result
+}
+
+func (l *Session) ImportYamlString(yml string) {
+
+}
+
+func (l *Session) getObjectId(placeholder string) bson.ObjectId {
+	value, exists := l.ObjectIds[placeholder]
+	if !exists {
+		value = bson.NewObjectId()
+		l.ObjectIds[placeholder] = value
+	}
+
+	return value
 }
 
 // Ends a session. Should be called with defer right after Begin :

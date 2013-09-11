@@ -36,6 +36,12 @@ func TestLoader(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	type Test struct {
+		Bla []int
+	}
+
+	err = session.Push("collection2", Test{Bla: []int{1, 2, 3, 4}})
+
 	err = session.Push("collection1", document{Id: bson.NewObjectId(), Title: "This is a demo"})
 
 	if err != nil {
@@ -52,7 +58,20 @@ func TestLoader(t *testing.T) {
 
 	checkCount(t, collection, "This is a demo 2", 1, "Wrong count after inserting a document")
 
+	session.ImportYamlFile("test.yml")
+
+	count, _ := mongoSession.DB("sample").C("employees").Find(nil).Count()
+	if count != 3 {
+		t.Fatal("Wrong count after inserting employees via yml")
+	}
+
+	// @todo check that Moss is friend with Roy
+	// @todo check that Roy is friend with Moss
+	// @todo check that Moss & Roy belongs to the basement
+
 	err = session.Clean("collection1")
+	err = session.Clean("employees")
+	err = session.Clean("locations")
 
 	if err != nil {
 		t.Fatal(err)

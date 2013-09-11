@@ -1,0 +1,21 @@
+employees:
+  morris:
+    _id: __morris__
+    name: Morris
+    friend: __roy__
+  roy:
+    _id: __roy__
+    name: Roy
+    friend: __morris__
+  jen:
+    _id: __jen__
+    name: Jen
+
+locations:
+  basement:
+    label: basement
+    members:
+        - __moss__
+        - __roy__
+  1st:
+    label: "1st Floor"

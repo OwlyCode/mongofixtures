@@ -6,6 +6,7 @@ import (
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"regexp"
+	"strconv"
 )
 
 // A session holds the mongo session (based on labix.org/v2/mgo).
@@ -106,7 +107,22 @@ func (l *Session) importScalar(value yaml.Scalar) interface{} {
 	if isHolder {
 		result = l.getObjectId(string(value))
 	} else {
-		result = value
+
+		resBool, isBool := strconv.ParseBool(string(value))
+		resFloat, isFloat := strconv.ParseFloat(string(value), 32)
+		resInt, isInt := strconv.ParseInt(string(value), 10, 32)
+
+		if isInt == nil {
+			return resInt
+		}
+		if isFloat == nil {
+			return resFloat
+		}
+		if isBool == nil {
+			return resBool
+		}
+
+		return value
 	}
 
 	return result

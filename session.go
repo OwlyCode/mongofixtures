@@ -26,7 +26,7 @@ func Begin(host string, databaseName string) (Session, error) {
 
 // Removes the collection identified by collectionName.
 func (l *Session) Clean(collectionName string) error {
-	err := l.MongoSession.DB(l.DatabaseName).C(collectionName).DropCollection()
+	_, err := l.MongoSession.DB(l.DatabaseName).C(collectionName).RemoveAll(nil)
 
 	if err != nil && err.Error() == "ns not found" {
 		err = nil
